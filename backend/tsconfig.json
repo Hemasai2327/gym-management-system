@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    /* Language & Environment */
+    "target": "ES2021",
+    "lib": ["ES2021"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+
+    /* Decorators (CRITICAL for NestJS) */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    /* Output */
+    "outDir": "./dist",
+    "sourceMap": true,
+    "declaration": false,
+    "removeComments": true,
+
+    /* Interop */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* Type Safety (Balanced, not broken) */
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": false,
+    "strictPropertyInitialization": false,
+
+    /* Performance */
+    "incremental": true,
+    "skipLibCheck": true,
+
+    /* Paths */
+    "baseUrl": "./",
+
+    /* Consistency */
+    "forceConsistentCasingInFileNames": true
+  },
+  "exclude": ["node_modules", "dist"]
+}
