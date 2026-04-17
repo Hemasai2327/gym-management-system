@@ -30,6 +30,7 @@ export class AuthService {
     const payload = {
       sub: admin._id.toString(),
       email: admin.email,
+      role: admin.role || 'manager', // Fallback just in case
     };
 
     return {

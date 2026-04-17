@@ -29,6 +29,13 @@ export default function Sidebar() {
         >
           <Users size={18} /> Members
         </Link>
+        <Link
+          href="/admin/payments"
+          className="flex items-center gap-3 p-3 rounded hover:bg-slate-800"
+        >
+          {/* Using a generic SVG or lucide icon for payments, let's just reuse Users or if lucide exists, CreditCard */}
+          <span>💳</span> Payments
+        </Link>
       </nav>
 
       <button

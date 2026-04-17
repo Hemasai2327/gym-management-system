@@ -10,6 +10,6 @@ import { MembersController } from './members.controller';
   ],
   controllers: [MembersController],
   providers: [MembersService],
-  exports: [MongooseModule],
+  exports: [MongooseModule, MembersService], // ← added MembersService
 })
-export class MembersModule {}
+export class MembersModule { }

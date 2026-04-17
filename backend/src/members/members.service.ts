@@ -31,8 +31,34 @@ export class MembersService {
     return member.save();
   }
 
-  findAll() {
-    return this.memberModel.find().sort({ createdAt: -1 });
+  async findAll(status?: string, page: number = 1, limit: number = 10) {
+    const query: any = {};
+    const today = new Date();
+
+    if (status === 'active') {
+      query.membershipEndDate = { $gte: today };
+    } else if (status === 'expired') {
+      query.membershipEndDate = { $lt: today };
+    } else if (status === 'expiring') {
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      query.membershipEndDate = { $lte: nextWeek, $gte: today };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.memberModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      this.memberModel.countDocuments(query)
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 
   findOne(id: string) {
@@ -40,7 +66,7 @@ export class MembersService {
   }
 
   findActive() {
-    return this.memberModel.find({ isActive: true });
+    return this.memberModel.find({ membershipEndDate: { $gte: new Date() } });
   }
 
   findExpired() {
@@ -83,5 +109,28 @@ export class MembersService {
     const res = await this.memberModel.findByIdAndDelete(id);
     if (!res) throw new NotFoundException('Member not found');
     return { success: true };
+  }
+
+  async exportCsv(): Promise<string> {
+    const members = await this.memberModel.find().lean();
+    if (members.length === 0) return '';
+    
+    // Create header
+    const keys = ['Name', 'Email', 'Phone', 'StartDate', 'EndDate', 'Status'];
+    const rows = members.map(m => {
+      const isExp = m.membershipEndDate < new Date();
+      const status = isExp ? 'Expired' : 'Active';
+      // Basic escaping handling for CSV
+      return [
+        `"${m.name || ''}"`,
+        `"${m.email || ''}"`,
+        `"${m.phone || ''}"`,
+        `"${m.startDate ? new Date(m.startDate).toISOString().substring(0, 10) : ''}"`,
+        `"${m.membershipEndDate ? new Date(m.membershipEndDate).toISOString().substring(0, 10) : ''}"`,
+        `"${status}"`
+      ].join(',');
+    });
+    
+    return [keys.join(','), ...rows].join('\n');
   }
 }

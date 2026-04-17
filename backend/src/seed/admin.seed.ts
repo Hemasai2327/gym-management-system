@@ -16,22 +16,25 @@ async function seedAdmin() {
     email: 'admin@gym.com',
   });
 
-  if (existingAdmin) {
-    console.log('✅ Admin already exists');
-    process.exit(0);
-  }
-
   const hashedPassword = await bcrypt.hash('Admin@123', 10);
 
-  await adminCollection.insertOne({
-    email: 'admin@gym.com',
-    password: hashedPassword,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  console.log('🎉 Admin created successfully');
+  if (existingAdmin) {
+    await adminCollection.updateOne(
+      { email: 'admin@gym.com' },
+      { $set: { role: 'superadmin', password: hashedPassword } }
+    );
+    console.log('✅ Admin updated to superadmin');
+  } else {
+    await adminCollection.insertOne({
+      email: 'admin@gym.com',
+      password: hashedPassword,
+      role: 'superadmin',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log('🎉 Admin created successfully');
+  }
   process.exit(0);
 }
 

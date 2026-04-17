@@ -11,6 +11,9 @@ export class Admin {
   @Prop({ required: true })
   password: string;
 
+  @Prop({ default: 'manager', enum: ['superadmin', 'manager'] })
+  role: string;
+
   @Prop({ default: true })
   isActive: boolean;
 }
