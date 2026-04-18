@@ -30,6 +30,17 @@ export class RemindersService {
   @Cron(CronExpression.EVERY_MINUTE) // Setting to every minute for quick testing, usually EVERY_DAY_AT_8AM
   async handleCron() {
     this.logger.debug('Running nightly reminder checks...');
+    
+    // Auto-cleanup functionality for stale database memory management.
+    try {
+      const deletedCount = await this.membersService.cleanupOldMembers();
+      if (deletedCount > 0) {
+        this.logger.log(`Pruned ${deletedCount} members expired for more than 90 days.`);
+      }
+    } catch (err) {
+      this.logger.error('Failed sweeping expired members', err);
+    }
+
     const expiringMembers = await this.membersService.findExpiringSoon();
 
     for (const member of expiringMembers) {

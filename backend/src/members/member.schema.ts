@@ -28,6 +28,9 @@ export class Member {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop({ required: false })
+  paymentMode?: string;
 }
 
 export const MemberSchema = SchemaFactory.createForClass(Member);

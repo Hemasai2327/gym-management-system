@@ -37,8 +37,9 @@ export default function DashboardPage() {
           return;
         }
 
-        const data: Member[] = await res.json();
-        setMembers(data);
+        const json = await res.json();
+        // The API returns paginated data: { data: Member[], total: number, ... }
+        setMembers(json.data || []);
       } catch (err) {
         console.error('Failed to load members', err);
       } finally {

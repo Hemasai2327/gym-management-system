@@ -26,6 +26,7 @@ export class MembersService {
       duration: dto.duration,
       membershipEndDate: expiry,
       isActive: expiry >= new Date(),
+      paymentMode: dto.paymentMode || 'Cash',
     });
 
     return member.save();
@@ -109,6 +110,17 @@ export class MembersService {
     const res = await this.memberModel.findByIdAndDelete(id);
     if (!res) throw new NotFoundException('Member not found');
     return { success: true };
+  }
+
+  async cleanupOldMembers(): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90);
+
+    const result = await this.memberModel.deleteMany({
+      membershipEndDate: { $lt: cutoffDate }
+    });
+
+    return result.deletedCount;
   }
 
   async exportCsv(): Promise<string> {

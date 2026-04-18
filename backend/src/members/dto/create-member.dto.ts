@@ -22,4 +22,7 @@ export class CreateMemberDto {
 
   /** Calculated on backend */
   membershipEndDate?: Date;
+
+  @IsString()
+  paymentMode?: string;
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import MemberForm from './MemberForm';
 import { Member } from './types';
 
-export default function MembersPage() {
+function MembersContent() {
   const router = useRouter();
   const params = useSearchParams();
   const status = params.get('status');
@@ -91,10 +91,13 @@ export default function MembersPage() {
 
   return (
     <>
-      <div className="flex justify-between mb-4">
-        <h1 className="text-xl font-bold">Members</h1>
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Members</h1>
+          <p className="text-slate-500 mt-1">Manage and track your gym members</p>
+        </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={async () => {
               const token = localStorage.getItem('token');
@@ -113,9 +116,9 @@ export default function MembersPage() {
                 alert('Failed to export members');
               }
             }}
-            className="bg-gray-800 text-white px-4 py-2 rounded"
+            className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-semibold transition-all shadow-sm flex items-center gap-2"
           >
-            Export to CSV
+            Export CSV
           </button>
           
           <button
@@ -123,98 +126,102 @@ export default function MembersPage() {
               setEditingMember(null);
               setShowForm(true);
             }}
-            className="bg-orange-600 text-white px-4 py-2 rounded"
+            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold transition-all shadow-md shadow-orange-500/20 flex items-center gap-2"
           >
-            Add Member
+            + Add Member
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full bg-white border">
-          <thead>
-            <tr className="border-b">
-              <th className="p-2 text-left">Name</th>
-              <th className="p-2 text-left">Email</th>
-              <th className="p-2 text-left">Expiry</th>
-              <th className="p-2 text-left">Actions</th>
-            </tr>
-          </thead>
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
+              <tr>
+                <th className="px-6 py-4 text-left font-semibold">Name</th>
+                <th className="px-6 py-4 text-left font-semibold">Email</th>
+                <th className="px-6 py-4 text-left font-semibold">Expiry</th>
+                <th className="px-6 py-4 text-right font-semibold">Actions</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {filteredMembers.length > 0 ? (
-              filteredMembers.map((m: Member) => (
-                <tr key={m._id} className="border-b hover:bg-gray-50/50">
-                  <td className="p-2">{m.name}</td>
-                  <td className="p-2">{m.email}</td>
-                  <td className="p-2">
-                    {m.membershipEndDate.substring(0, 10)}
-                  </td>
-                  <td className="p-2 space-x-2">
-                    <button
-                      onClick={() => {
-                        setEditingMember(m);
-                        setShowForm(true);
-                      }}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Edit
-                    </button>
-                    {userRole === 'superadmin' && (
+            <tbody className="divide-y divide-slate-100">
+              {filteredMembers.length > 0 ? (
+                filteredMembers.map((m: Member) => (
+                  <tr key={m._id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4 font-medium text-slate-800">{m.name}</td>
+                    <td className="px-6 py-4 text-slate-500">{m.email}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        {m.membershipEndDate.substring(0, 10)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 space-x-3 text-right">
+                      <button
+                        onClick={() => {
+                          setEditingMember(m);
+                          setShowForm(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                      >
+                        Edit
+                      </button>
+                      {userRole === 'superadmin' && (
+                        <button
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this member?')) {
+                              const token = localStorage.getItem('token');
+                              await fetch(`http://localhost:3001/members/${m._id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                },
+                              });
+                              fetchMembers();
+                            }
+                          }}
+                          className="text-red-500 hover:text-red-700 font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                      )}
                       <button
                         onClick={async () => {
-                          if (confirm('Are you sure you want to delete this member?')) {
+                          const amount = prompt('Enter payment amount:');
+                          if (amount && !isNaN(Number(amount))) {
                             const token = localStorage.getItem('token');
-                            await fetch(`http://localhost:3001/members/${m._id}`, {
-                              method: 'DELETE',
+                            await fetch(`http://localhost:3001/payments`, {
+                              method: 'POST',
                               headers: {
+                                'Content-Type': 'application/json',
                                 Authorization: `Bearer ${token}`,
                               },
+                              body: JSON.stringify({
+                                memberId: m._id,
+                                memberName: m.name,
+                                amount: Number(amount)
+                              })
                             });
-                            fetchMembers();
+                            alert('Payment recorded!');
                           }
                         }}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-emerald-600 hover:text-emerald-800 font-medium transition-colors"
                       >
-                        Delete
+                        Pay
                       </button>
-                    )}
-                    <button
-                      onClick={async () => {
-                        const amount = prompt('Enter payment amount:');
-                        if (amount && !isNaN(Number(amount))) {
-                          const token = localStorage.getItem('token');
-                          await fetch(`http://localhost:3001/payments`, {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              memberId: m._id,
-                              memberName: m.name,
-                              amount: Number(amount)
-                            })
-                          });
-                          alert('Payment recorded!');
-                        }
-                      }}
-                      className="text-green-600 hover:text-green-800"
-                    >
-                      Pay
-                    </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-slate-500">
+                    No members found.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  No members found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination Controls */}
@@ -251,5 +258,13 @@ export default function MembersPage() {
         />
       )}
     </>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <MembersContent />
+    </Suspense>
   );
 }

@@ -12,64 +12,81 @@ export default function LoginPage() {
   const submit = async () => {
     setError('');
 
-    const res = await fetch('http://localhost:3001/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const res = await fetch('http://localhost:3001/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password: password.trim() }),
+      });
 
-    if (!res.ok) {
-      setError('Invalid credentials');
-      return;
+      if (!res.ok) {
+        setError('Invalid credentials');
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem('token', data.accessToken);
+      document.cookie = `token=${data.accessToken}; path=/; max-age=86400`;
+      router.replace('/admin/dashboard');
+    } catch (err: any) {
+      setError('Network error: Unable to connect to server');
+      console.error('Login error:', err);
     }
-
-    const data = await res.json();
-    localStorage.setItem('token', data.accessToken);
-    router.replace('/admin/dashboard');
   };
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      className="min-h-screen flex items-center justify-center bg-slate-950 bg-cover bg-center"
       style={{ backgroundImage: "url('/gym-bg.jpg')" }}
     >
-      <div className="bg-black/70 backdrop-blur-lg p-10 rounded-2xl w-95 text-white shadow-xl">
-        <h1 className="text-3xl font-bold text-center mb-2">Strive Fitness</h1>
-        <p className="text-gray-300 text-center mb-6">
-          Please sign in to your account
-        </p>
+      <div className="bg-white/5 backdrop-blur-2xl border border-white/10 p-10 rounded-[2rem] w-full max-w-md text-white shadow-2xl transition-all">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-rose-500 mb-2">
+            Strive Fitness
+          </h1>
+          <p className="text-slate-300 font-medium">Please sign in to your account</p>
+        </div>
 
         {error && (
-          <p className="text-red-400 text-sm text-center mb-4">{error}</p>
+          <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-sm p-3 rounded-xl mb-6 text-center">
+            {error}
+          </div>
         )}
 
-        <input
-          type="email"
-          placeholder="Email Address"
-          className="w-full p-3 rounded bg-white/10 border border-white/20 mb-4 outline-none"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
+          <div>
+            <input
+              type="email"
+              placeholder="Email Address"
+              className="w-full p-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white/10 transition-all placeholder:text-slate-400"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-3 rounded bg-white/10 border border-white/20 mb-4 outline-none"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              className="w-full p-4 rounded-xl bg-white/5 border border-white/10 outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white/10 transition-all placeholder:text-slate-400"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <button
-          onClick={submit}
-          className="w-full bg-orange-500 hover:bg-orange-600 transition text-white py-3 rounded-lg font-semibold"
-        >
-          Sign In
-        </button>
+          <button
+            type="submit"
+            className="w-full mt-2 bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 transition-all duration-300 transform hover:-translate-y-1 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] text-white py-4 rounded-xl font-bold text-lg"
+          >
+            Sign In
+          </button>
+        </form>
 
-        <p className="text-center text-sm text-gray-400 mt-6">
-          Don’t have an account? <span className="text-orange-400">Sign Up</span>
+        <p className="text-center text-sm text-slate-400 mt-8">
+          Don’t have an account? <span className="text-orange-400 font-semibold cursor-pointer hover:text-orange-300 transition-colors">Contact Admin</span>
         </p>
       </div>
     </div>
   );
 }
+
